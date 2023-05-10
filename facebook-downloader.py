@@ -14,7 +14,7 @@ def main():
     webpage_url = get_webpage_url()
     driver = set_up_driver()
     get_webpage(driver, webpage_url)
-    #scroll_webpage(driver)
+    scroll_webpage(driver)
     images = get_images(driver)
     driver.close()
     save(images)
@@ -100,6 +100,10 @@ def get_urls(driver, elems):
         wait = WebDriverWait(driver, 10)
         wait.until(EC.number_of_windows_to_be(2))
         driver.switch_to.window(driver.window_handles[-1])
+        wait = WebDriverWait(driver, 10)
+        wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "img[data-visualcompletion*='media-vc-image']"))
+        )
         image_elem = driver.find_element(By.CSS_SELECTOR, "img[data-visualcompletion*='media-vc-image']")
         image_url = image_elem.get_attribute("src")
         image_title = image_url.split(".jpg")[0].split("/")[-1]
