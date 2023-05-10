@@ -14,7 +14,7 @@ def main():
     webpage_url = get_webpage_url()
     driver = set_up_driver()
     get_webpage(driver, webpage_url)
-    scroll_webpage(driver)
+    #scroll_webpage(driver)
     images = get_images(driver)
     driver.close()
     save(images)
@@ -38,7 +38,7 @@ def get_webpage(driver, webpage_url):
     print("Getting webpage...")
     driver.get(webpage_url)
     accept_cookies(driver)
-    global page_title
+    global page_title   
     page_title = driver.find_element(By.CSS_SELECTOR, 'link[hreflang = "x-default"]').get_attribute("href").split("/")[-1]
 
 
@@ -57,7 +57,7 @@ def accept_cookies(driver):
 def scroll_webpage(driver):
     print("Scrolling webpage...")
 
-    SCROLL_PAUSE_TIME = 2
+    SCROLL_PAUSE_TIME = 1
 
     # Get scroll height
     last_height = driver.execute_script("return document.body.scrollHeight")
@@ -79,7 +79,7 @@ def scroll_webpage(driver):
 def get_images(driver):
     print("Collecting images...")
     elems = get_elems(driver)
-    images = get_urls(elems)
+    images = get_urls(driver, elems)
     return images
 
 
@@ -90,15 +90,17 @@ def get_elems(driver):
     return elems
 
 
-def get_urls(elems):
+def get_urls(driver, elems):
+    main_page = driver.current_window_handle
     images = []
 
     for elem in elems:
         url = elem.get_attribute("href")
-        image_driver = set_up_driver()
-        image_driver.get(url)
-        accept_cookies(image_driver)
-        image_elem = image_driver.find_element(By.CSS_SELECTOR, 'img[data-visualcompletion="media-vc-image"]')
+        driver.execute_script("window.open('{}')".format(url))
+        wait = WebDriverWait(driver, 10)
+        wait.until(EC.number_of_windows_to_be(2))
+        driver.switch_to.window(driver.window_handles[-1])
+        image_elem = driver.find_element(By.CSS_SELECTOR, "img[data-visualcompletion*='media-vc-image']")
         image_url = image_elem.get_attribute("src")
         image_title = image_url.split(".jpg")[0].split("/")[-1]
         image = {
@@ -106,7 +108,8 @@ def get_urls(elems):
             "title": image_title
         }
         images.append(image)
-        image_driver.close()
+        driver.close()
+        driver.switch_to.window(main_page)
     
     return images
 
