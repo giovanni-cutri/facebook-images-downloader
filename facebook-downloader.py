@@ -116,7 +116,7 @@ def save(images, total):
         print("Downloading image # " + count + " of " + str(len(images)) + "...")
         out_path = os.path.join(os.getcwd(), "facebook", page_title, image["title"] + ".jpg")
         urllib.request.urlretrieve(image["url"], out_path)
-    print("Done")
+    print("Done.")
 
 
 if __name__ == "__main__":
