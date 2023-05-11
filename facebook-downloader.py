@@ -43,7 +43,7 @@ def get_webpage(driver, webpage_url):
 
 
 def accept_cookies(driver):
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 20)
 
     wait.until(
         EC.presence_of_element_located((By.CSS_SELECTOR, 'div[aria-label="Consenti tutti i cookie"]'))
@@ -57,7 +57,7 @@ def accept_cookies(driver):
 def scroll_webpage(driver):
     print("Scrolling webpage...")
 
-    SCROLL_PAUSE_TIME = 1
+    SCROLL_PAUSE_TIME = 2
 
     # Get scroll height
     last_height = driver.execute_script("return document.body.scrollHeight")
@@ -94,13 +94,14 @@ def get_urls(driver, elems):
     main_page = driver.current_window_handle
     images = []
 
-    for elem in elems:
+    for count, elem in enumerate(elems):
+        print("Collecting image #" + str(count + 1) + " of " + str(len(elems)) + "...")
         url = elem.get_attribute("href")
         driver.execute_script("window.open('{}')".format(url))
         wait = WebDriverWait(driver, 10)
         wait.until(EC.number_of_windows_to_be(2))
         driver.switch_to.window(driver.window_handles[-1])
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 20)
         wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "img[data-visualcompletion*='media-vc-image']"))
         )
@@ -118,23 +119,24 @@ def get_urls(driver, elems):
     return images
 
 
-def save(images, total):
+def save(images):
+    print("Downloading images...")
     for count, image in enumerate(images):
-        print("Downloading image # " + count + " of " + str(len(images)) + "...")
-        out_path = os.path.join(os.getcwd(), "facebook", page_title, image["title"] + ".jpg")
+        print("Downloading image #" + str(count + 1) + " of " + str(len(images)) + "...")
+        facebook_folder = os.path.join(os.getcwd(), "facebook")
+        try:
+            os.makedirs(facebook_folder)
+        except OSError:
+            pass
+        page_folder = os.path.join(facebook_folder, page_title)
+        try:
+            os.makedirs(page_folder)
+        except OSError:
+            pass
+        out_path = os.path.join(page_folder, image["title"] + ".jpg")
         urllib.request.urlretrieve(image["url"], out_path)
     print("Done.")
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
