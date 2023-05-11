@@ -57,7 +57,7 @@ def accept_cookies(driver):
 def scroll_webpage(driver):
     print("Scrolling webpage...")
 
-    SCROLL_PAUSE_TIME = 2
+    SCROLL_PAUSE_TIME = 4
 
     # Get scroll height
     last_height = driver.execute_script("return document.body.scrollHeight")
@@ -107,7 +107,7 @@ def get_urls(driver, elems):
         )
         image_elem = driver.find_element(By.CSS_SELECTOR, "img[data-visualcompletion*='media-vc-image']")
         image_url = image_elem.get_attribute("src")
-        image_title = image_url.split(".jpg")[0].split("/")[-1]
+        image_title = image_url.split("?")[0].split("/")[-1][:-4]
         image = {
             "url": image_url,
             "title": image_title
