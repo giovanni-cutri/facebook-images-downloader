@@ -6,6 +6,7 @@
 # Getting Started
 
 Requires Python 3, which you can download [here](https://www.python.org/downloads/), along with the *selenium* library.
+
 Download the file *facebook-downloader.py* from this repository.
 
 # Usage
