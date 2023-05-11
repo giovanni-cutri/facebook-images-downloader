@@ -5,13 +5,15 @@
 
 # Getting Started
 
-Requires Python 3, which you can download [here](https://www.python.org/downloads/), along with the *selenium* library.
+Requires:
+- Python 3, which you can download [here](https://www.python.org/downloads/), along with the *selenium* library;
+- [geckodriver](https://github.com/mozilla/geckodriver), a Firefox WebDriver (refer to its repository for installation instructions).
 
 Download the file *facebook-downloader.py* from this repository.
 
 # Usage
 
-Open the command prompt from the folder where the file is located and run the following command:
+Open the command prompt from the folder where *facebook-downloader.py* is located and run the following command:
 
 ````
 python facebook-downloader.py [URL]
