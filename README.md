@@ -18,6 +18,8 @@ python facebook-downloader.py [URL]
 
 replacing [URL] with the URL of the Facebook page of which you want to download the images.
 
+The script will create a *facebook* folder and a subfolder with the same name of the page, where the images will be saved.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE]([https://github.com/giovanni-cutri/flashpoint-playlist-from-submissions/blob/main/LICENSE](https://github.com/giovanni-cutri/facebook-images-downloader/blob/main/LICENSE)) file for details.
