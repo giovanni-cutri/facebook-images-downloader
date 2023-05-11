@@ -27,7 +27,7 @@ def set_up_driver():
 
 def get_webpage_url():
     try:
-        webpage_url = sys.argv[1]
+        webpage_url = sys.argv[1].strip("/") + "/photos"
     except IndexError:
         print("Please provide a valid URL.")
         sys.exit()
