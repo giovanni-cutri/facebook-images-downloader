@@ -25,4 +25,4 @@ The script will create a *facebook* folder and a subfolder with the same name of
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE]([https://github.com/giovanni-cutri/flashpoint-playlist-from-submissions/blob/main/LICENSE](https://github.com/giovanni-cutri/facebook-images-downloader/blob/main/LICENSE)) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/giovanni-cutri/facebook-images-downloader/blob/main/LICENSE) file for details.
