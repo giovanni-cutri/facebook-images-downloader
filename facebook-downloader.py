@@ -1,4 +1,4 @@
-import argparse
+import sys
 import time
 import os
 import urllib.request
@@ -11,36 +11,27 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 
 def main():
-    args = parse_arguments()
+    webpage_url = get_webpage_url()
     driver = set_up_driver()
-    urls = []
-    if args.albums:
-        url = args.url.strip("/") + "/photos_albums"
-        get_webpage(driver, url)
-        scroll_webpage(driver)
-        albums = driver.find_elements(By.CSS_SELECTOR, "a[href*='.com/media/set/']")
-        urls.extend(albums)
-    else:
-        urls.append(args.url.strip("/") + "/photos")
-    for url in urls:
-        get_webpage(driver, url)
-        scroll_webpage(driver)
-        images = get_images(driver)
-        driver.close()
-        save(images)
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description="Download images from a Facebook page")
-    parser.add_argument("url", help="the URL of the page")
-    parser.add_argument("-a", "--albums", help="save images in different folders following their location in the albums of the page", action="store_true")
-    args = parser.parse_args()
-    return args
+    get_webpage(driver, webpage_url)
+    scroll_webpage(driver)
+    images = get_images(driver)
+    driver.close()
+    save(images)
 
 
 def set_up_driver():
     driver = webdriver.Firefox()
     return driver
+
+
+def get_webpage_url():
+    try:
+        webpage_url = sys.argv[1].strip("/") + "/photos"
+    except IndexError:
+        print("Please provide a valid URL.")
+        sys.exit()
+    return webpage_url
 
 
 def get_webpage(driver, webpage_url):
@@ -74,7 +65,7 @@ def close_login(driver):
     login = driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Chiudi"]')
     driver.implicitly_wait(10)
     ActionChains(driver).move_to_element(login).click(login).perform()
-    
+
 
 def scroll_webpage(driver):
     print("Scrolling webpage...")
