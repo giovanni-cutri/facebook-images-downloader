@@ -1,4 +1,4 @@
-import sys
+import argparse
 import time
 import os
 import urllib.request
@@ -11,13 +11,31 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 
 def main():
-    webpage_url = get_webpage_url()
+    args = parse_arguments()
     driver = set_up_driver()
-    get_webpage(driver, webpage_url)
-    scroll_webpage(driver)
-    images = get_images(driver)
-    driver.close()
-    save(images)
+    urls = []
+    if args.albums:
+        url = args.url.strip("/") + "/photos_albums"
+        get_webpage(driver, url)
+        scroll_webpage(driver)
+        albums = driver.find_elements(By.CSS_SELECTOR, "a[href*='.com/media/set/']")
+        urls.extend(albums)
+    else:
+        urls.append(args.url.strip("/") + "/photos")
+    for url in urls:
+        get_webpage(driver, url)
+        scroll_webpage(driver)
+        images = get_images(driver)
+        driver.close()
+        save(images)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Download images from a Facebook page")
+    parser.add_argument("url", help="the URL of the page")
+    parser.add_argument("-a", "--albums", help="save images in different folders following their location in the albums of the page", action="store_true")
+    args = parser.parse_args()
+    return args
 
 
 def set_up_driver():
@@ -25,19 +43,11 @@ def set_up_driver():
     return driver
 
 
-def get_webpage_url():
-    try:
-        webpage_url = sys.argv[1].strip("/") + "/photos"
-    except IndexError:
-        print("Please provide a valid URL.")
-        sys.exit()
-    return webpage_url
-
-
 def get_webpage(driver, webpage_url):
     print("Getting webpage...")
     driver.get(webpage_url)
     accept_cookies(driver)
+    close_login(driver)
     global page_title   
     page_title = driver.find_element(By.CSS_SELECTOR, 'link[hreflang = "x-default"]').get_attribute("href").split("/")[-1]
 
@@ -53,6 +63,18 @@ def accept_cookies(driver):
     driver.implicitly_wait(10)
     ActionChains(driver).move_to_element(cookies).click(cookies).perform()
 
+
+def close_login(driver):
+    wait = WebDriverWait(driver, 20)
+
+    wait.until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'div[aria-label="Chiudi"]'))
+    )
+
+    login = driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Chiudi"]')
+    driver.implicitly_wait(10)
+    ActionChains(driver).move_to_element(login).click(login).perform()
+    
 
 def scroll_webpage(driver):
     print("Scrolling webpage...")
