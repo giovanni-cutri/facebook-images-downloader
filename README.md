@@ -21,7 +21,13 @@ python facebook-downloader.py [URL]
 
 replacing [URL] with the URL of the Facebook page of which you want to download the images.
 
-The script will create a *facebook* folder and a subfolder with the same name of the page, where the images will be saved.
+If you want to download images in different folders based on the albums they are located in, you can pass this argument:
+
+````
+-a, --album         download images in different folders corresponding to the albums they are located in
+````
+
+The script will create a *facebook* folder, a subfolder with the name of the page, and eventually a subfolder for each album where the images will be saved.
 
 ## License
 
