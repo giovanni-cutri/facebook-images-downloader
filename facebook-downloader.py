@@ -1,4 +1,4 @@
-import sys
+import argparse
 import time
 import os
 import urllib.request
@@ -8,16 +8,39 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import TimeoutException
 
 
 def main():
-    webpage_url = get_webpage_url()
-    driver = set_up_driver()
-    get_webpage(driver, webpage_url)
-    scroll_webpage(driver)
-    images = get_images(driver)
-    driver.close()
-    save(images)
+    args = parse_arguments()
+    urls = []
+    titles = []
+    if args.album:
+        album_driver = set_up_driver()
+        url = args.url.strip("/") + "/photos_albums"
+        get_webpage(album_driver, url)
+        scroll_webpage(album_driver)
+        urls, titles = get_albums(album_driver)
+        album_driver.quit()
+    else:
+        url = args.url.strip("/") + "/photos"
+        urls.append(url)
+    for album_number, url in enumerate(urls):
+        driver = set_up_driver()
+        get_webpage(driver, url)
+        scroll_webpage(driver)
+        images = get_images(driver, album_number)
+        driver.close()
+        save(images, album_number, titles)
+        driver.quit()
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url", help="the URL of the Facebook page")
+    parser.add_argument("-a", "--album", help="download images in different folders corresponding to the albums they are located in", action="store_true")
+    args = parser.parse_args()
+    return args
 
 
 def set_up_driver():
@@ -25,22 +48,13 @@ def set_up_driver():
     return driver
 
 
-def get_webpage_url():
-    try:
-        webpage_url = sys.argv[1].strip("/") + "/photos"
-    except IndexError:
-        print("Please provide a valid URL.")
-        sys.exit()
-    return webpage_url
-
-
-def get_webpage(driver, webpage_url):
+def get_webpage(driver, url):
     print("Getting webpage...")
-    driver.get(webpage_url)
+    driver.get(url)
     accept_cookies(driver)
     close_login(driver)
-    global page_title   
-    page_title = driver.find_element(By.CSS_SELECTOR, 'link[hreflang = "x-default"]').get_attribute("href").split("/")[-1]
+    global page_title
+    page_title = driver.find_element(By.CSS_SELECTOR, 'h1').get_attribute("innerHTML")
 
 
 def accept_cookies(driver):
@@ -56,21 +70,25 @@ def accept_cookies(driver):
 
 
 def close_login(driver):
-    wait = WebDriverWait(driver, 20)
 
-    wait.until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'div[aria-label="Chiudi"]'))
-    )
+    try:
+        wait = WebDriverWait(driver, 20)
 
-    login = driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Chiudi"]')
-    driver.implicitly_wait(10)
-    ActionChains(driver).move_to_element(login).click(login).perform()
+        wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[aria-label="Chiudi"]'))
+        )
+
+        login = driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Chiudi"]')
+        driver.implicitly_wait(10)
+        ActionChains(driver).move_to_element(login).click(login).perform()
+    except TimeoutException:
+        pass
 
 
 def scroll_webpage(driver):
     print("Scrolling webpage...")
 
-    SCROLL_PAUSE_TIME = 4
+    SCROLL_PAUSE_TIME = 5
 
     # Get scroll height
     last_height = driver.execute_script("return document.body.scrollHeight")
@@ -89,17 +107,33 @@ def scroll_webpage(driver):
         last_height = new_height
 
 
-def get_images(driver):
-    print("Collecting images...")
-    elems = get_elems(driver)
+def get_albums(album_driver):
+    print("Collecting albums...")
+    album_elems = album_driver.find_elements(By.CSS_SELECTOR, "a[href*='.com/media/set/']")
+    album_titles_elems = album_driver.find_elements(By.CSS_SELECTOR, "a[href*='.com/media/set/'] span")
+    albums = []
+    album_titles = []
+    for album_elem in album_elems:
+        album = album_elem.get_attribute("href")
+        albums.append(album)
+    for album_title_elem in album_titles_elems[::2]:
+        album_title = album_title_elem.get_attribute("innerHTML")
+        album_titles.append(album_title)
+    return albums, album_titles
+
+
+def get_images(driver, album_number):
+    print(f"\nCollecting images of album #{album_number + 1}...")
+    elems = get_image_elems(driver)
     images = get_urls(driver, elems)
     return images
 
 
-def get_elems(driver):
+def get_image_elems(driver):
     elems_first_set = driver.find_elements(By.CSS_SELECTOR, "a[href*='.com/photo.php?fbid=']")
     elems_second_set = driver.find_elements(By.CSS_SELECTOR, "a[href*='photos/']")
-    elems = elems_first_set + elems_second_set
+    elems_third_set = driver.find_elements(By.CSS_SELECTOR, "a[href*='/photo/?fbid=']")[2:]   # the first two photos are the profile pictures
+    elems = elems_first_set + elems_second_set + elems_third_set
     return elems
 
 
@@ -110,6 +144,8 @@ def get_urls(driver, elems):
     for count, elem in enumerate(elems):
         print("Collecting image #" + str(count + 1) + " of " + str(len(elems)) + "...")
         url = elem.get_attribute("href")
+        if not "facebook.com" in url:
+            url = "https://www.facebook.com" + url
         driver.execute_script("window.open('{}')".format(url))
         wait = WebDriverWait(driver, 10)
         wait.until(EC.number_of_windows_to_be(2))
@@ -132,8 +168,8 @@ def get_urls(driver, elems):
     return images
 
 
-def save(images):
-    print("Downloading images...")
+def save(images, album_number, titles):
+    print(f"\nDownloading images of album #{album_number + 1}...")
     for count, image in enumerate(images):
         print("Downloading image #" + str(count + 1) + " of " + str(len(images)) + "...")
         facebook_folder = os.path.join(os.getcwd(), "facebook")
@@ -146,7 +182,15 @@ def save(images):
             os.makedirs(page_folder)
         except OSError:
             pass
-        out_path = os.path.join(page_folder, image["title"] + ".jpg")
+        if titles:
+            album_folder = os.path.join(page_folder, titles[album_number])
+            try:
+                os.makedirs(album_folder)
+            except OSError:
+                pass
+            out_path = os.path.join(album_folder, image["title"] + ".jpg")
+        else:
+            out_path = os.path.join(page_folder, image["title"] + ".jpg")
         urllib.request.urlretrieve(image["url"], out_path)
     print("Done.")
 
