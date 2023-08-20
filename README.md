@@ -1,5 +1,3 @@
-![Socialify](https://github.com/giovanni-cutri/facebook-images-downloader/blob/main/resources/socialify.png)
-
 # facebook-images-downloader
  A tool to download all the images of a Facebook page.
 
